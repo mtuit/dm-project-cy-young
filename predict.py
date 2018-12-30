@@ -2,29 +2,23 @@ import pandas as pd
 import xgboost as xgb
 import numpy as np
 
-# Predicting the AL CY Young award winner
-data = pd.read_csv('data/AL_2018.csv')
-test = data.drop(labels=['Name', 'Team', 'xFIP'], axis=1)
+def predict_cy_young(data_paths, model_name, labels_to_drop=None):
+    bst = xgb.XGBModel()
+    bst.load_model(model_name)
 
-bst = xgb.XGBModel()
-bst.load_model('MLB-model.model')
-ypreds = bst.predict(test)
+    for data_path in data_paths:
+        data = pd.read_csv(data_path)
+        to_predict = data.drop(labels=labels_to_drop, axis=1)
+        ypreds = bst.predict(to_predict)
+        max_value = max(ypreds)
+        max_value_index = int(np.where(ypreds == max_value)[0])
+        print("The winner for {}".format(data_path))
+        print(data.ix[max_value_index])
 
-max_value = max(ypreds)
-max_value_index = int(np.where(ypreds == max_value)[0])
+if __name__ == '__main__':
+    data_paths = ['data/AL_2018_Standard.csv', 'data/NL_2018_Standard.csv']
+    labels_to_drop = ['Name', 'Team', 'G', 'GS', 'ShO', 'SV', 'HLD', 'BS', 'TBF', 'H', 'R', 'IBB', 'HBP',
+                      'BK']
+    model_name = 'MLB-Model-Standard-2nd.model'
 
-print(data.ix[max_value_index])
-
-# Predicting the NL CY Young award winner
-data = pd.read_csv('data/NL_2018.csv')
-test = data.drop(labels=['Name', 'Team', 'xFIP'], axis=1)
-
-bst = xgb.XGBModel()
-bst.load_model('MLB-model.model')
-ypreds = bst.predict(test)
-
-max_value = max(ypreds)
-max_value_index = int(np.where(ypreds == max_value)[0])
-
-print(data.ix[max_value_index])
-
+    predict_cy_young(data_paths, model_name, labels_to_drop)
