@@ -12,16 +12,16 @@ def tune_hyperparameters(data_paths, model_name, labels_to_drop=None):
 
     cv = KFold(n_splits=10)
 
-    auc_baselines = []
+    accuracy = []
     for train, test in cv.split(X):
         y_train, y_test = y[train], y[test]
 
         mean_train = np.mean(y_train)
         baseline_predictions = np.ones(y_test.shape) * mean_train
 
-        auc_baselines.append(accuracy_score(y_test, (baseline_predictions > 0.5).astype(int)))
+        accuracy.append(accuracy_score(y_test, (baseline_predictions > 0.5).astype(int)))
 
-    print("Baseline Accuracy is {:.2f}".format(np.mean(auc_baselines)))
+    print("Baseline Accuracy is {:.2f}".format(np.mean(accuracy)))
 
     params = {
         'max_depth': 6,
@@ -33,6 +33,7 @@ def tune_hyperparameters(data_paths, model_name, labels_to_drop=None):
     }
 
     params['eval_metric'] = "error"
+
     for train, test in cv.split(X):
         X_train, X_test = X[train], X[test]
         y_train, y_test = y[train], y[test]
@@ -174,8 +175,6 @@ def tune_hyperparameters(data_paths, model_name, labels_to_drop=None):
 
     params['eta'] = 0.9
 
-    print(params)
-
     model = xgb.train(
         params,
         dtrain,
@@ -195,19 +194,20 @@ def tune_hyperparameters(data_paths, model_name, labels_to_drop=None):
         evals=[(dtest, "Test")]
     )
 
+    print(params)
+
     best_model.save_model(model_name)
 
 if __name__ == '__main__':
     # First iteration
     data_paths=['data/AL_2007-2017_Standard.csv', 'data/NL_2007-2017_Standard.csv']
     labels_to_drop = ['y', 'Name', 'Team', 'Season']
-    model_name = 'MLB-Model-Standard.model'
+    model_name = 'MLB-Model-edit.model'
 
     tune_hyperparameters(data_paths, model_name, labels_to_drop)
 
     # Second Iteration
-    labels_to_drop = ['Season', 'Name', 'Team', 'G', 'GS', 'ShO', 'SV', 'HLD', 'BS', 'TBF', 'H', 'R', 'IBB', 'HBP',
-                      'BK', 'y']
-    model_name = 'MLB-Model-Standard-2nd.model'
+    labels_to_drop = ['Season', 'Name', 'Team', 'GS', 'ShO', 'TBF', 'H', 'R', 'IBB', 'HBP', 'y']
+    model_name = 'MLB-Model-Standard-edit.model'
 
     tune_hyperparameters(data_paths, model_name, labels_to_drop)
